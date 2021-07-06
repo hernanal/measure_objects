@@ -6,6 +6,7 @@ import argparse
 import imutils
 import cv2
 
+# BUG: if sum or diff of two points is the same, wrong indexes could be chosen for corners
 def order_points_old(pts):
     # initialize a list of coordinates that will be ordered
     # such that the first entry in the list is in the top-left
@@ -29,5 +30,17 @@ def order_points_old(pts):
     # return the ordered coordinates
     return rect
 
+ap = argparse.ArgumentParser()
+ap.add_argument('-i','--image',required=True,help='path to input image')
+ap.add_argument('-n','--new',type=int,default=-1,help='whether or not the new order points should be used.')
+args = vars(ap.parse_args())
 
+# load the input image, convert it to grayscale, and blur it slightly
+image = cv2.imread(args['image'])
+gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+gray = cv2.GaussianBlur(gray,(7,7),0)
 
+# perform Canny edge detection, then perform a dilation + erosion to close gaps in between object edges
+edged = cv2.Canny(gray,50,100)
+edged = cv2.dilate(edged,None,iterations=1)
+edged = cv2.erode(edged,None,iterations=1)
